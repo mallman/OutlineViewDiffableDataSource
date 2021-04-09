@@ -107,7 +107,7 @@ public extension DiffableDataSourceSnapshot {
   /// - Parameter parentItem: Optional parent item, pass `nil` to append root items.
   /// - Returns: False if items cannot be added e.g. because the parent is not in the snapshot.
   @discardableResult
-  mutating func appendItems(_ newItems: [Item], into parentItem: Item? = nil) -> Bool {
+  mutating func appendItems<Items>(_ newItems: Items, into parentItem: Item? = nil) -> Bool where Items: Collection, Items.Element: Item {
     guard validateNewItems(newItems) else { return false }
     guard let parentItem = parentItem else {
       let newIds = newItems.map { newItem -> ItemID in
@@ -141,7 +141,7 @@ public extension DiffableDataSourceSnapshot {
   /// - Parameter beforeItem: The target item below new items.
   /// - Returns: False if items cannot be inserted e.g. because the target item is not in the snapshot.
   @discardableResult
-  mutating func insertItems(_ newItems: [Item], beforeItem: Item) -> Bool {
+  mutating func insertItems<Items>(_ newItems: Items, beforeItem: Item) -> Bool where Items: Collection, Items.Element: Item {
     insertItems(newItems, aroundItem: beforeItem) { $0 }
   }
 
@@ -150,7 +150,7 @@ public extension DiffableDataSourceSnapshot {
   /// - Parameter afterItem: The target item above new items.
   /// - Returns: False if items cannot be inserted e.g. because the target item is not in the snapshot.
   @discardableResult
-  mutating func insertItems(_ newItems: [Item], afterItem: Item) -> Bool {
+  mutating func insertItems<Items>(_ newItems: Items, afterItem: Item) -> Bool where Items: Collection, Items.Element: Item {
     insertItems(newItems, aroundItem: afterItem) { $0 + 1 }
   }
 
@@ -158,7 +158,7 @@ public extension DiffableDataSourceSnapshot {
   /// - Parameter existingItems: Items added to the snapshot before.
   /// - Returns: False if items cannot be deleted e.g. because some of them are not in the snapshot.
   @discardableResult
-  mutating func deleteItems(_ existingItems: [Item]) -> Bool {
+  mutating func deleteItems<Items>(_ existingItems: Items) -> Bool where Items: Collection, Items.Element: Item {
     guard validateExistingItems(Set(existingItems)) else { return false }
 
     var affectedIds = Set(existingItems.compactMap(idForItem))
@@ -196,7 +196,7 @@ public extension DiffableDataSourceSnapshot {
   /// - Parameter items: Items added to the snapshot before.
   /// - Returns: False if items cannot be reloaded e.g. because some of them are not in the snapshot.
   @discardableResult
-  mutating func reloadItems(_ items: [Item]) -> Bool {
+  mutating func reloadItems<Items>(_ items: Items) -> Bool where Items: Collection, Items.Element: Item {
     guard validateExistingItems(Set(items)) else { return false }
     let ids = items.compactMap(idForItem)
     idsPendingReload.formUnion(ids)
@@ -329,7 +329,7 @@ private extension DiffableDataSourceSnapshot {
 
   /// Returns true if this snapshot does not have any passed items.
   /// - Parameter newItems: New items not yet added to the snapshot.
-  func validateNewItems(_ newItems: [Item]) -> Bool {
+  func validateNewItems<Items>(_ newItems: Items) -> Bool where Items: Collection, Items.Element: Item {
     guard Set(newItems).count == newItems.count else {
       os_log(.error, log: errors, "Repeating items cannot be added")
       return false
@@ -376,7 +376,7 @@ private extension DiffableDataSourceSnapshot {
   /// - Parameter indexFrom: Calculator for the insertion index.
   /// - Parameter targetIndex: Current index of the target item.
   /// - Returns: False if items cannot be inserted e.g. because some of them are already in the snapshot.
-  mutating func insertItems(_ newItems: [Item], aroundItem targetItem: Item, using indexFrom: (_ targetIndex: Int) -> Int) -> Bool {
+  mutating func insertItems<Items>(_ newItems: Items, aroundItem targetItem: Item, using indexFrom: (_ targetIndex: Int) -> Int) -> Bool where Items: Collection, Items.Element: Item {
     guard validateNewItems(newItems) else { return false }
     guard let targetItemId = idForItem(targetItem), let targetNode = nodeForId(targetItemId) else {
       os_log(.error, log: errors, "Cannot find item “%s”", String(describing: targetItem))
