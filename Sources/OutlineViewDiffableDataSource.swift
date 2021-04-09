@@ -61,7 +61,6 @@ public class OutlineViewDiffableDataSource: NSObject, NSOutlineViewDataSource, N
     precondition(outlineView.delegate == nil)
     outlineView.dataSource = self
     outlineView.delegate = self
-    outlineView.usesAutomaticRowHeights = true
     self.outlineView = outlineView
     outlineView.registerForDraggedTypes(outlineView.registeredDraggedTypes + [.itemID])
   }
