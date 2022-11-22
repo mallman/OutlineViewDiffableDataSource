@@ -18,6 +18,11 @@ public protocol OutlineViewItem: Hashable, Identifiable {
 
   /// Called to create a row view of the custom type.
   var rowViewType: NSTableRowView.Type? { get }
+
+  /// Called to create a row view of the custom type.
+  var rowViewReuseIdentifier: NSUserInterfaceItemIdentifier { get }
+
+  func reuseIdentifier(for tableColumn: NSTableColumn?) -> NSUserInterfaceItemIdentifier
 }
 
 // MARK: -
@@ -38,4 +43,12 @@ public extension OutlineViewItem {
 
   /// Use a standard row view type by default.
   var rowViewType: NSTableRowView.Type? { nil }
+
+  var rowViewReuseIdentifier: NSUserInterfaceItemIdentifier {
+      return NSUserInterfaceItemIdentifier(NSStringFromClass(rowViewType ?? NSTableRowView.self))
+  }
+
+  func reuseIdentifier(for tableColumn: NSTableColumn?) -> NSUserInterfaceItemIdentifier {
+      let cellViewType = cellViewType(for: tableColumn)
+      return NSUserInterfaceItemIdentifier(NSStringFromClass(cellViewType)) }
 }
