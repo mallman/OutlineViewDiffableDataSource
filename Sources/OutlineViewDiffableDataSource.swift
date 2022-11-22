@@ -1,9 +1,10 @@
 import AppKit
 
 /// Offers a diffable interface for providing content for `NSOutlineView`.  It automatically performs insertions, deletions, and moves necessary to transition from one model-state snapshot to another.
-open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+open class OutlineViewDiffableDataSource<Item: Hashable & Identifiable>: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
     public typealias CellProvider = (_ outlineView: NSOutlineView, _ tableColumn: NSTableColumn, _ item: Item) -> NSView
     public typealias RowProvider = (_ outlineView: NSOutlineView, _ item: Item) -> NSTableRowView
+    public typealias ItemCheck = (_ outlineView: NSOutlineView, _ item: Item) -> Bool
 
     /// Tree with data.
     private var diffableSnapshot: DiffableDataSourceSnapshot<Item>
@@ -56,6 +57,10 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
     /// This property replaces the ``tableView(_:rowViewForRow:)`` delegate method.
     public var rowViewProvider: RowProvider?
 
+    public var isSelectableProvider: ItemCheck?
+    public var isExpandableProvider: ItemCheck?
+    public var isGroupProvider: ItemCheck?
+
     /// Creates a new data source as well as a delegate for the given outline view.
     /// - Parameters:
     ///   - outlineView: The initialized outline view object to connect to the diffable data source.
@@ -93,8 +98,7 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
 
     /// Uses diffable snapshot.
     public func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-        guard let item = item as? (any OutlineViewItem) else { return true }
-        return item.isExpandable
+        return isExpandableProvider?(outlineView, item as! Item) ?? false
     }
 
     /// Enables dragging for items which return Pasteboard representation.
@@ -155,8 +159,7 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
 
     /// Enables special appearance for group items.
     public func outlineView(_ outlineView: NSOutlineView, isGroupItem item: Any) -> Bool {
-        guard let item = item as? (any OutlineViewItem) else { return false }
-        return item.isGroup
+        return isGroupProvider?(outlineView, item as! Item) ?? false
     }
 
     /// Creates a cell view for the given item,
@@ -167,8 +170,8 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
     /// Filters selectable items.
     public func outlineView(_ outlineView: NSOutlineView, selectionIndexesForProposedSelection proposedSelectionIndexes: IndexSet) -> IndexSet {
         proposedSelectionIndexes.filteredIndexSet {
-            guard let item = outlineView.item(atRow: $0) as? (any OutlineViewItem) else { return false }
-            return item.isSelectable
+            guard let item = outlineView.item(atRow: $0) as? Item else { return false }
+            return isSelectableProvider?(outlineView, item) ?? false
         }
     }
 

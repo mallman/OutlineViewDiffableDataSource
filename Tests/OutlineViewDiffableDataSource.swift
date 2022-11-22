@@ -2,7 +2,7 @@ import OutlineViewDiffableDataSource
 import XCTest
 
 final class OutlineViewDiffableDataSourceTests: XCTestCase {
-    private class OutlineItem: NSObject, OutlineViewItem, Identifiable {
+    private class OutlineItem: NSObject, Identifiable {
         let title: String
         init(title: String) { self.title = title }
         override var hash: Int { title.hash }
@@ -60,6 +60,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
         // GIVEN: Some items in the outline view
         let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView) { _, _, _ in return NSTableCellView(frame: .zero )}
+        dataSource.isExpandableProvider = { _, _ in true }
         var initialSnapshot = dataSource.snapshot()
         initialSnapshot.appendItems([a, b])
         initialSnapshot.appendItems([a1], into: a)
@@ -98,6 +99,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
         // GIVEN: Thes items in the outline view
         let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView) { _, _, _ in return NSTableCellView(frame: .zero )}
+        dataSource.isExpandableProvider = { _, _ in true }
         var initialSnapshot = dataSource.snapshot()
         initialSnapshot.appendItems([a, b])
         initialSnapshot.appendItems([a1, b2, a3], into: a)

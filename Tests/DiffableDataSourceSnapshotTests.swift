@@ -1,7 +1,7 @@
 import OutlineViewDiffableDataSource
 import XCTest
 
-private class SnapshotItem: NSObject, OutlineViewItem, Identifiable {
+private class SnapshotItem: NSObject, Identifiable {
     let id: String
     init(id: String) { self.id = id }
     override var hash: Int { id.hash }
