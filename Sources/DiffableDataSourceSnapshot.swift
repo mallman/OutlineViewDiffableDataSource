@@ -2,11 +2,7 @@ import Foundation
 import OSLog
 
 /// Container for the tree of items.
-public struct DiffableDataSourceSnapshot {
-
-  /// Shortcut for outline view objects.
-  public typealias Item = NSObject
-
+public struct DiffableDataSourceSnapshot<Item> where Item: Hashable & Identifiable {
   /// Shortcut for outline view object IDs.
   typealias ItemID = UUID
 

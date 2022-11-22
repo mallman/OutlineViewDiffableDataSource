@@ -3,7 +3,7 @@ import OutlineViewDiffableDataSource
 
 final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
-  private class OutlineItem: NSObject, OutlineViewItem {
+  private class OutlineItem: NSObject, OutlineViewItem, Identifiable {
     let title: String
     init(title: String) { self.title = title }
     override var hash: Int { title.hash }
@@ -24,7 +24,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
   func testEmptyOutlineView() {
 
     // GIVEN: Empty data source
-    let dataSource: OutlineViewDiffableDataSource = .init(outlineView: outlineView)
+    let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView)
     XCTAssertTrue(outlineView.dataSource === dataSource)
 
     // WHEN: Outline view is loaded
@@ -42,7 +42,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     let c = OutlineItem(title: "c")
 
     // WHEN: They are added to the snapshot
-    let dataSource: OutlineViewDiffableDataSource = .init(outlineView: outlineView)
+    let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView)
     var snapshot = dataSource.snapshot()
     snapshot.appendItems([a, b, c])
     dataSource.applySnapshot(snapshot, animatingDifferences: false)
@@ -63,7 +63,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     let b2 = OutlineItem(title: "b2")
 
     // GIVEN: Some items in the outline view
-    let dataSource: OutlineViewDiffableDataSource = .init(outlineView: outlineView)
+    let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView)
     var initialSnapshot = dataSource.snapshot()
     initialSnapshot.appendItems([a, b])
     initialSnapshot.appendItems([a1], into: a)
@@ -102,7 +102,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     let b2 = OutlineItem(title: "b2")
 
     // GIVEN: Thes items in the outline view
-    let dataSource: OutlineViewDiffableDataSource = .init(outlineView: outlineView)
+    let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView)
     var initialSnapshot = dataSource.snapshot()
     initialSnapshot.appendItems([a, b])
     initialSnapshot.appendItems([a1, b2, a3], into: a)

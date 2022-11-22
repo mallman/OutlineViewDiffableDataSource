@@ -1,19 +1,13 @@
 import XCTest
 import OutlineViewDiffableDataSource
 
-private class SnapshotItem: NSObject, OutlineViewItem {
+private class SnapshotItem: NSObject, OutlineViewItem, Identifiable {
   let id: String
   init(id: String) { self.id = id }
   override var hash: Int { id.hash }
   override func isEqual(_ object: Any?) -> Bool {
     guard let snapshotItem = object as? SnapshotItem else { return false }
     return snapshotItem.id == id
-  }
-}
-
-extension Collection where Element == NSObject {
-  func snapshotItemIds() -> [String] {
-    compactMap { $0 as? SnapshotItem }.map(\.id)
   }
 }
 
@@ -46,7 +40,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let a2 = SnapshotItem(id: "a")
 
     // WHEN: They are added to snapshot
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertFalse(snapshot.appendItems([a1, a2]))
     XCTAssertTrue(snapshot.appendItems([a1]))
     XCTAssertFalse(snapshot.appendItems([a2]))
@@ -61,7 +55,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
   func testEmptyState() {
 
     // GIVEN: New snapshot
-    let snapshot: DiffableDataSourceSnapshot = .init()
+    let snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
 
     // THEN: It is empty
     XCTAssertEqual(snapshot.numberOfItems, 0)
@@ -78,13 +72,13 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: They are added to snapshot
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
 
     // THEN: Snapshot contains thes items
     XCTAssertEqual(snapshot.numberOfItems, 3)
-    XCTAssertEqual(snapshot.sortedItems().snapshotItemIds(), ["a", "b", "c"])
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a, b, c])
+      XCTAssertEqual(snapshot.sortedItems().map(\.id), ["a", "b", "c"])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a, b, c])
 
     // THEN: Number of items in root is 3
     XCTAssertEqual(snapshot.numberOfItems(in: nil), 3)
@@ -103,25 +97,25 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let b1 = SnapshotItem(id: "b1")
 
     // WHEN: They are added to snapshot
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b]))
     XCTAssertTrue(snapshot.appendItems([a1, a2], into: a))
     XCTAssertTrue(snapshot.appendItems([b1], into: b))
 
     // THEN: Total number is correct
     XCTAssertEqual(snapshot.numberOfItems, 5)
-    XCTAssertEqual(snapshot.sortedItems().snapshotItemIds(), ["a", "a1", "a2", "b", "b1"])
+      XCTAssertEqual(snapshot.sortedItems().map(\.id), ["a", "a1", "a2", "b", "b1"])
 
     // THEN: Leaves are correct
     XCTAssertEqual(snapshot.numberOfItems(in: nil), 2)
     XCTAssertEqual(snapshot.numberOfItems(in: a), 2)
     XCTAssertEqual(snapshot.numberOfItems(in: b), 1)
-    XCTAssertEqual(snapshot.childrenOfItem(a).compactMap { $0 as? SnapshotItem }, [a1, a2])
+    XCTAssertEqual(snapshot.childrenOfItem(a), [a1, a2])
     XCTAssertEqual(snapshot.indexOfItem(b), 1)
     XCTAssertEqual(snapshot.indexOfItem(a2), 1)
 
     // THEN: Parents are correct
-    XCTAssertEqual(snapshot.parentOfItem(a1) as? SnapshotItem, a)
+    XCTAssertEqual(snapshot.parentOfItem(a1), a)
     XCTAssertNil(snapshot.parentOfItem(a))
   }
 
@@ -132,7 +126,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let y = SnapshotItem(id: "y")
 
     // WHEN: Only one item is in the snapshot
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([x]))
 
     // THEN: The second item cannot be found
@@ -153,13 +147,13 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: They are added twice
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b]))
     XCTAssertFalse(snapshot.appendItems([c, c]))
     XCTAssertFalse(snapshot.appendItems([b, c]))
 
     // THEN: The second time is skipped
-    XCTAssertEqual(snapshot.sortedItems().snapshotItemIds(), ["a", "b"])
+      XCTAssertEqual(snapshot.sortedItems().map(\.id), ["a", "b"])
   }
 
   func testAddingToNotFound() {
@@ -169,7 +163,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let b = SnapshotItem(id: "b")
 
     // WHEN: You try to use one the them as parent
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertFalse(snapshot.appendItems([b], into: a))
 
     // THEN: The change is ignored
@@ -192,7 +186,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let e = SnapshotItem(id: "e")
 
     // WHEN: Insertions are performed
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, e]))
     XCTAssertTrue(snapshot.insertItems([b, c], afterItem: a))
     XCTAssertTrue(snapshot.insertItems([d], beforeItem: e))
@@ -203,9 +197,9 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     XCTAssertTrue(snapshot.insertItems([b3], afterItem: b2))
 
     // THEN: Tree is correct
-    XCTAssertEqual(snapshot.sortedItems().snapshotItemIds(), ["a", "a1", "a2", "a3", "b", "b1", "b2", "b3", "c", "d", "e"])
-    XCTAssertEqual(snapshot.childrenOfItem(a).compactMap { $0 as? SnapshotItem }, [a1, a2, a3])
-    XCTAssertEqual(snapshot.childrenOfItem(b).compactMap { $0 as? SnapshotItem }, [b1, b2, b3])
+    XCTAssertEqual(snapshot.sortedItems().map(\.id), ["a", "a1", "a2", "a3", "b", "b1", "b2", "b3", "c", "d", "e"])
+    XCTAssertEqual(snapshot.childrenOfItem(a), [a1, a2, a3])
+    XCTAssertEqual(snapshot.childrenOfItem(b), [b1, b2, b3])
   }
 
   func testInvalidInsertions() {
@@ -217,13 +211,13 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let d = SnapshotItem(id: "d")
 
     // WHEN: Invlid insertions are performed
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, c]))
     XCTAssertFalse(snapshot.insertItems([b, c], afterItem: d))
     XCTAssertFalse(snapshot.insertItems([d], afterItem:b))
 
     // THEN: The snapshot is not changed
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a, c])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a, c])
   }
 
   func testDeletions() {
@@ -240,15 +234,15 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: Insertions and deletions are performed
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
     XCTAssertTrue(snapshot.appendItems([a1, a2, a3], into: a))
     XCTAssertTrue(snapshot.appendItems([b1, b2, b3], into: b))
     XCTAssertTrue(snapshot.deleteItems([a1, a2, b3, c]))
 
     // THEN: The snapshot is correct
-    XCTAssertEqual(snapshot.childrenOfItem(a).compactMap { $0 as? SnapshotItem }, [a3])
-    XCTAssertEqual(snapshot.childrenOfItem(b).compactMap { $0 as? SnapshotItem }, [b1, b2])
+    XCTAssertEqual(snapshot.childrenOfItem(a), [a3])
+    XCTAssertEqual(snapshot.childrenOfItem(b), [b1, b2])
   }
 
   func testBranchDeletions() {
@@ -260,7 +254,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let d = SnapshotItem(id: "d")
 
     // WHEN: Items added as nested and deleted
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a]))
     XCTAssertTrue(snapshot.appendItems([b], into: a))
     XCTAssertTrue(snapshot.appendItems([c], into: b))
@@ -270,7 +264,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     XCTAssertFalse(snapshot.reloadItems([c, d]))
 
     // THEN: The snapshot is correct
-    XCTAssertEqual(snapshot.sortedItems().snapshotItemIds(), ["a"])
+    XCTAssertEqual(snapshot.sortedItems().map(\.id), ["a"])
     XCTAssertTrue(snapshot.flushReloadedItems().isEmpty)
   }
 
@@ -281,12 +275,12 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let b = SnapshotItem(id: "b")
 
     // WHEN: You try to delete non-added item
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a]))
     XCTAssertFalse(snapshot.deleteItems([b]))
 
     // THEN: The change is ignored
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a])
   }
 
   func testAddingAfterDeleting() {
@@ -302,7 +296,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: Insertions, re-insertions after deletions are performed
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
     XCTAssertTrue(snapshot.appendItems([a1, a2, a3], into: a))
     XCTAssertTrue(snapshot.appendItems([b1, b2], into: b))
@@ -314,9 +308,9 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     XCTAssertTrue(snapshot.insertItems([a3], afterItem: a2))
 
     // THEN: The snapshot is correct
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a, b, c])
-    XCTAssertEqual(snapshot.childrenOfItem(a).compactMap { $0 as? SnapshotItem }, [a1, a2, a3])
-    XCTAssertEqual(snapshot.childrenOfItem(b).compactMap { $0 as? SnapshotItem }, [b1, b2])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a, b, c])
+    XCTAssertEqual(snapshot.childrenOfItem(a), [a1, a2, a3])
+    XCTAssertEqual(snapshot.childrenOfItem(b), [b1, b2])
   }
 
   func testDeletingAll() {
@@ -332,7 +326,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: All items deleted after insertions
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
     XCTAssertTrue(snapshot.appendItems([a1, a2, a3], into: a))
     XCTAssertTrue(snapshot.appendItems([b1, b2], into: b))
@@ -356,14 +350,14 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: Some items reloaded
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
     XCTAssertTrue(snapshot.appendItems([a1, a2, a3], into: a))
     XCTAssertTrue(snapshot.appendItems([b1, b2], into: b))
     XCTAssertTrue(snapshot.reloadItems([a1, b2, c]))
 
     // THEN: Items are marked as reloaded
-    XCTAssertEqual(snapshot.flushReloadedItems().compactMap { $0 as? SnapshotItem }, [a1, b2, c])
+    XCTAssertEqual(snapshot.flushReloadedItems(), [a1, b2, c])
     XCTAssertTrue(snapshot.flushReloadedItems().isEmpty)
   }
 
@@ -376,7 +370,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let a3 = SnapshotItem(id: "a3")
 
     // WHEN: You reload not-added items
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a]))
     XCTAssertTrue(snapshot.appendItems([a1, a2], into: a))
     XCTAssertFalse(snapshot.reloadItems([a2, a3]))
@@ -393,13 +387,13 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: You reload but then delete
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b, c]))
     XCTAssertTrue(snapshot.reloadItems([a, b]))
     XCTAssertTrue(snapshot.deleteItems([b, c]))
 
     // THEN: The snapshot is correct
-    XCTAssertEqual(snapshot.flushReloadedItems().compactMap { $0 as? SnapshotItem }, [a])
+    XCTAssertEqual(snapshot.flushReloadedItems(), [a])
   }
 
   func testMoving() {
@@ -416,7 +410,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let d = SnapshotItem(id: "d")
 
     // WHEN: You insert them
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([c, b, a]))
     XCTAssertTrue(snapshot.appendItems([a1, a3, b2], into: a))
     XCTAssertTrue(snapshot.appendItems([b1, a2], into: b))
@@ -436,9 +430,9 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     XCTAssertTrue(snapshot.moveItem(a2, beforeItem: a3))
 
     // THEN: The snapshot is correct
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a, b, c])
-    XCTAssertEqual(snapshot.childrenOfItem(a).compactMap { $0 as? SnapshotItem }, [a1, a2, a3])
-    XCTAssertEqual(snapshot.childrenOfItem(b).compactMap { $0 as? SnapshotItem }, [b1, b2])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a, b, c])
+    XCTAssertEqual(snapshot.childrenOfItem(a), [a1, a2, a3])
+    XCTAssertEqual(snapshot.childrenOfItem(b), [b1, b2])
     XCTAssertTrue(snapshot.childrenOfItem(c).isEmpty)
   }
 
@@ -450,7 +444,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let c = SnapshotItem(id: "c")
 
     // WHEN: You move non-added items
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b]))
     XCTAssertFalse(snapshot.moveItem(a, afterItem: a))
     XCTAssertFalse(snapshot.moveItem(c, afterItem: a))
@@ -460,7 +454,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     XCTAssertFalse(snapshot.moveItem(b, beforeItem: c))
 
     // THEN: The snapshot is not affected
-    XCTAssertEqual(snapshot.childrenOfItem(nil).compactMap { $0 as? SnapshotItem }, [a, b])
+    XCTAssertEqual(snapshot.childrenOfItem(nil), [a, b])
   }
 
   func testEnumeration() {
@@ -476,7 +470,7 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     let b2 = SnapshotItem(id: "b2")
 
     // WHEN: You insert them
-    var snapshot: DiffableDataSourceSnapshot = .init()
+    var snapshot: DiffableDataSourceSnapshot<SnapshotItem> = .init()
     XCTAssertTrue(snapshot.appendItems([a, b]))
     XCTAssertTrue(snapshot.appendItems([a1, a2], into: a))
     XCTAssertTrue(snapshot.appendItems([a21, a22], into: a2))
@@ -485,8 +479,8 @@ final class DiffableDataSourceSnapshotTests: XCTestCase {
     // THEN: Items enumerated from top to bottom
     var lines: [String] = []
     snapshot.enumerateItems { item, parent in
-      let itemId = (item as? SnapshotItem)?.id
-      let parentId = (parent as? SnapshotItem)?.id
+      let itemId = item.id
+      let parentId = parent?.id
       lines.append([parentId, itemId].compactMap { $0 }.joined(separator: " / "))
     }
     XCTAssertEqual(lines.joined(separator: "\n"), """

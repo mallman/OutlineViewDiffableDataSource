@@ -1,13 +1,10 @@
 import AppKit
 
 /// Offers a diffable interface for providing content for `NSOutlineView`.  It automatically performs insertions, deletions, and moves necessary to transition from one model-state snapshot to another.
-open class OutlineViewDiffableDataSource: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
-
-  /// Shortcut for outline view objects.
-  public typealias Item = DiffableDataSourceSnapshot.Item
+open class OutlineViewDiffableDataSource<Item>: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate where Item: Hashable & Identifiable & NSObject {
 
   /// Tree with data.
-  private var diffableSnapshot: DiffableDataSourceSnapshot
+  private var diffableSnapshot: DiffableDataSourceSnapshot<Item>
 
   /// Associated outline view.
   private weak var outlineView: NSOutlineView?
@@ -196,7 +193,7 @@ open class OutlineViewDiffableDataSource: NSObject, NSOutlineViewDataSource, NSO
 public extension OutlineViewDiffableDataSource {
 
   /// Returns current state of the data source. This property is thread-safe.
-  func snapshot() -> DiffableDataSourceSnapshot {
+  func snapshot() -> DiffableDataSourceSnapshot<Item> {
     if Thread.isMainThread {
       return diffableSnapshot
     } else {
@@ -208,7 +205,7 @@ public extension OutlineViewDiffableDataSource {
   /// - Parameter snapshot: Snapshot with new data.
   /// - Parameter animatingDifferences: Pass false to disable animations.
   /// - Parameter completionHandler: Called asynchronously in the main thread when the new snapshot is applied.
-  func applySnapshot(_ snapshot: DiffableDataSourceSnapshot, animatingDifferences: Bool, completionHandler: (() -> Void)? = nil) {
+  func applySnapshot(_ snapshot: DiffableDataSourceSnapshot<Item>, animatingDifferences: Bool, completionHandler: (() -> Void)? = nil) {
 
     // Source and Destination
     let oldSnapshot = self.snapshot()
@@ -298,13 +295,13 @@ private extension OutlineViewDiffableDataSource {
     // Retrieve dragged items
     let draggedItems: [Item] = pasteboardItems.compactMap { pasteboardItem in
       guard let propertyList = pasteboardItem.propertyList(forType: .itemID) as? String,
-        let itemId = DiffableDataSourceSnapshot.ItemID(uuidString: propertyList) else { return nil }
+        let itemId = DiffableDataSourceSnapshot<Item>.ItemID(uuidString: propertyList) else { return nil }
       return diffableSnapshot.itemForId(itemId)
     }
     guard draggedItems.count == pasteboardItems.count else { return nil }
 
     // Drop on the item
-    let parentItem = item as? NSObject
+    let parentItem = item as? Item
     if index == NSOutlineViewDropOnItemIndex {
       return parentItem.map { .init(type: .on, targetItem: $0, draggedItems: draggedItems, operation: info.draggingSourceOperationMask) }
     }
