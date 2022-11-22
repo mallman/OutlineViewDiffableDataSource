@@ -3,6 +3,9 @@ import AppKit
 /// Offers a diffable interface for providing content for `NSOutlineView`.  It automatically performs insertions, deletions, and moves necessary to transition from one model-state snapshot to another.
 open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
 
+  public typealias CellProvider = (_ outlineView: NSOutlineView, _ tableColumn: NSTableColumn, _ item: Item) -> NSView
+  public typealias RowProvider = (_ outlineView: NSOutlineView, _ item: Item) -> NSTableRowView
+
   /// Tree with data.
   private var diffableSnapshot: DiffableDataSourceSnapshot<Item>
 
@@ -47,10 +50,16 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
   /// Assign non-nil value to enable drag-n-drop.
   public var draggingHandlers: DraggingHandlers?
 
+  /// Cell provider.
+  public var cellProvider: CellProvider?
+
+  public var rowProvider: RowProvider?
+
   /// Creates a new data source as well as a delegate for the given outline view.
   /// - Parameter outlineView: Outline view without a data source and without a delegate.
-  public init(outlineView: NSOutlineView) {
+  public init(outlineView: NSOutlineView, cellProvider: CellProvider? = nil) {
     self.diffableSnapshot = .init()
+    self.cellProvider = cellProvider
 
     super.init()
 
@@ -152,17 +161,7 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
 
   /// Creates a cell view for the given item,
   public func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
-    guard let item = item as? (any OutlineViewItem) else { return nil }
-    let cellViewType = item.cellViewType(for: tableColumn)
-    let cellViewTypeIdentifier = item.reuseIdentifier(for: tableColumn)
-    let cachedCellView = outlineView.makeView(withIdentifier: cellViewTypeIdentifier, owner: self)
-    let cellView = cachedCellView as? NSTableCellView ?? {
-      let newCellView = cellViewType.init()
-      newCellView.identifier = cellViewTypeIdentifier
-      return newCellView
-    }()
-    cellView.objectValue = item
-    return cellView
+    return cellProvider?(outlineView, tableColumn!, item as! Item)
   }
 
   /// Filters selectable items.
@@ -175,16 +174,7 @@ open class OutlineViewDiffableDataSource<Item: OutlineViewItem>: NSObject, NSOut
 
   /// Creates a row view for the given item,
   public func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
-    guard let item = item as? (any OutlineViewItem) else { return nil }
-    let rowViewType = item.rowViewType ?? NSTableRowView.self
-    let rowViewTypeIdentifier = NSUserInterfaceItemIdentifier(NSStringFromClass(rowViewType))
-    let cachedRowView = outlineView.makeView(withIdentifier: rowViewTypeIdentifier, owner: self)
-    let rowView = cachedRowView as? NSTableRowView ?? {
-      let newRowView = rowViewType.init()
-      newRowView.identifier = rowViewTypeIdentifier
-      return newRowView
-    }()
-    return rowView
+    return rowProvider?(outlineView, item as! Item)
   }
 }
 

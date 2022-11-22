@@ -11,18 +11,6 @@ public protocol OutlineViewItem: Hashable, Identifiable {
 
   /// Can be used for root items with ‘Show’ and ‘Hide’ buttons.
   var isGroup: Bool { get }
-
-  /// Called to create a cell view of the custom type.
-  /// - Parameter tableColumn: Optional column that the view will be inserted into.
-  func cellViewType(for tableColumn: NSTableColumn?) -> NSTableCellView.Type
-
-  /// Called to create a row view of the custom type.
-  var rowViewType: NSTableRowView.Type? { get }
-
-  /// Called to create a row view of the custom type.
-  var rowViewReuseIdentifier: NSUserInterfaceItemIdentifier { get }
-
-  func reuseIdentifier(for tableColumn: NSTableColumn?) -> NSUserInterfaceItemIdentifier
 }
 
 // MARK: -
@@ -37,18 +25,4 @@ public extension OutlineViewItem {
 
   /// No group items by default.
   var isGroup: Bool { false }
-
-  /// Returns an empty cell view by default.
-  func cellViewType(for tableColumn: NSTableColumn?) -> NSTableCellView.Type { NSTableCellView.self }
-
-  /// Use a standard row view type by default.
-  var rowViewType: NSTableRowView.Type? { nil }
-
-  var rowViewReuseIdentifier: NSUserInterfaceItemIdentifier {
-      return NSUserInterfaceItemIdentifier(NSStringFromClass(rowViewType ?? NSTableRowView.self))
-  }
-
-  func reuseIdentifier(for tableColumn: NSTableColumn?) -> NSUserInterfaceItemIdentifier {
-      let cellViewType = cellViewType(for: tableColumn)
-      return NSUserInterfaceItemIdentifier(NSStringFromClass(cellViewType)) }
 }
