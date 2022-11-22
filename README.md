@@ -18,7 +18,7 @@ var snapshot = dataSource.snapshot()
 snapshot.appendItems([folder1, folder2])
 snapshot.appendItems([file11, file12], into: folder1)
 snapshot.appendItems([file21, file22], into: folder2)
-dataSource.applySnapshot(initialSnapshot, animatingDifferences: false)
+dataSource.apply(initialSnapshot, animatingDifferences: false)
 ```
 
 The accompanying `DiffableDataSourceSnapshot` API is heavily inspired by Cocoa’s own `NSDiffableDataSourceSnapshot` and includes many similar methods, but adopted for tree data structures:

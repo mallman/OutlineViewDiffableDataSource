@@ -45,7 +45,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     let dataSource: OutlineViewDiffableDataSource<OutlineItem> = .init(outlineView: outlineView)
     var snapshot = dataSource.snapshot()
     snapshot.appendItems([a, b, c])
-    dataSource.applySnapshot(snapshot, animatingDifferences: false)
+    dataSource.apply(snapshot, animatingDifferences: false)
 
     // THEN: They appear in the outline view
     XCTAssertEqual(outlineView.numberOfRows, 3)
@@ -68,7 +68,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     initialSnapshot.appendItems([a, b])
     initialSnapshot.appendItems([a1], into: a)
     initialSnapshot.appendItems([b2], into: b)
-    dataSource.applySnapshot(initialSnapshot, animatingDifferences: false)
+    dataSource.apply(initialSnapshot, animatingDifferences: false)
 
     // WHEN: Items are inserted with animation
     var finalSnapshot = dataSource.snapshot()
@@ -78,7 +78,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
     // Wait while animation is completed
     let e = expectation(description: "Animation")
-    dataSource.applySnapshot(finalSnapshot, animatingDifferences: true) {
+    dataSource.apply(finalSnapshot, animatingDifferences: true) {
       e.fulfill()
     }
     waitForExpectations(timeout: 0.5, handler: nil)
@@ -107,7 +107,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     initialSnapshot.appendItems([a, b])
     initialSnapshot.appendItems([a1, b2, a3], into: a)
     initialSnapshot.appendItems([b1, a2], into: b)
-    dataSource.applySnapshot(initialSnapshot, animatingDifferences: false)
+    dataSource.apply(initialSnapshot, animatingDifferences: false)
 
     // WHEN: Items are moved
     var finalSnapshot = dataSource.snapshot()
@@ -116,7 +116,7 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
     // Wait while animation is completed
     let e = expectation(description: "Animation")
-    dataSource.applySnapshot(finalSnapshot, animatingDifferences: true) {
+    dataSource.apply(finalSnapshot, animatingDifferences: true) {
       e.fulfill()
     }
     waitForExpectations(timeout: 0.5, handler: nil)

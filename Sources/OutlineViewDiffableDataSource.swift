@@ -205,7 +205,7 @@ public extension OutlineViewDiffableDataSource {
   /// - Parameter snapshot: Snapshot with new data.
   /// - Parameter animatingDifferences: Pass false to disable animations.
   /// - Parameter completionHandler: Called asynchronously in the main thread when the new snapshot is applied.
-  func applySnapshot(_ snapshot: DiffableDataSourceSnapshot<Item>, animatingDifferences: Bool, completionHandler: (() -> Void)? = nil) {
+  func apply(_ snapshot: DiffableDataSourceSnapshot<Item>, animatingDifferences: Bool, completionHandler: (() -> Void)? = nil) {
 
     // Source and Destination
     let oldSnapshot = self.snapshot()

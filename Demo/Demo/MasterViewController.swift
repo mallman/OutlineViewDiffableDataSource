@@ -57,7 +57,7 @@ final class MasterViewController: NSViewController {
       case .after:
         snapshot.insertItems(drop.draggedItems, afterItem: drop.targetItem)
       }
-      sender.applySnapshot(snapshot, animatingDifferences: shouldAnimate)
+      sender.apply(snapshot, animatingDifferences: shouldAnimate)
       return true
     })
     return source
@@ -83,7 +83,7 @@ extension MasterViewController {
     .init(get: { [dataSource] in
       dataSource.snapshot()
     }, set: { [dataSource] snapshot in
-      dataSource.applySnapshot(snapshot, animatingDifferences: shouldAnimate)
+      dataSource.apply(snapshot, animatingDifferences: shouldAnimate)
     })
   }
 
