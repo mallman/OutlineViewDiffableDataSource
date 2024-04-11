@@ -4,7 +4,7 @@ import OSLog
 /// Container for the tree of items.
 public struct DiffableDataSourceSnapshot<Item> where Item: Hashable & Identifiable {
     /// Shortcut for outline view object IDs.
-    typealias ItemID = UUID
+    typealias ItemID = Item.ID
 
     /// Used to store tree nodes for items.
     private struct Node: Hashable {
@@ -105,7 +105,7 @@ public extension DiffableDataSourceSnapshot {
         guard validateNewItems(newItems) else { return false }
         guard let parentItem = parentItem else {
             let newIds = newItems.map { newItem -> ItemID in
-                let newId = ItemID()
+                let newId = newItem.id
                 itemsForIds[newId] = newItem
                 idsForItems[newItem] = newId
                 nodesForIds[newId] = .init(parent: nil, children: [])
@@ -119,7 +119,7 @@ public extension DiffableDataSourceSnapshot {
             return false
         }
         let newIds = newItems.map { newItem -> ItemID in
-            let newId = ItemID()
+            let newId = newItem.id
             itemsForIds[newId] = newItem
             idsForItems[newItem] = newId
             nodesForIds[newId] = .init(parent: parentId, children: [])
@@ -257,7 +257,7 @@ public extension DiffableDataSourceSnapshot {
 // MARK: - Internal API
 
 extension DiffableDataSourceSnapshot {
-    /// Container for sorting.
+    /// Container for diffing.
     struct IndexedID: Hashable {
         /// Item identifier.
         let itemId: ItemID
@@ -268,14 +268,16 @@ extension DiffableDataSourceSnapshot {
         /// Full path to the item.
         let itemPath: IndexPath
 
-        /// Only IDs should be equal.
+        /// IDs and parent IDs should be equal.
         static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.itemId == rhs.itemId
+            lhs.itemId == rhs.itemId &&
+            lhs.parentId == rhs.parentId
         }
 
-        /// Only ID means as hash.
+        /// ID and parent ID  as hash.
         func hash(into hasher: inout Hasher) {
             hasher.combine(itemId)
+            hasher.combine(parentId)
         }
     }
 
@@ -326,8 +328,7 @@ private extension DiffableDataSourceSnapshot {
         }
         let existingIds = newItems.compactMap(idForItem)
         guard existingIds.isEmpty else {
-            let ids = existingIds.map(\.uuidString).joined(separator: ", ")
-            logger.error("Items with IDs '\(ids, privacy: .public)' have already been added")
+            logger.error("Items with IDs '\(existingIds, privacy: .public)' have already been added")
             return false
         }
         return true
@@ -374,7 +375,7 @@ private extension DiffableDataSourceSnapshot {
         }
         guard let parentId = targetNode.parent else {
             let newIds = newItems.map { newItem -> ItemID in
-                let newId = ItemID()
+                let newId = newItem.id
                 itemsForIds[newId] = newItem
                 idsForItems[newItem] = newId
                 nodesForIds[newId] = .init(parent: nil, children: [])
@@ -386,7 +387,7 @@ private extension DiffableDataSourceSnapshot {
             return true
         }
         let newIds = newItems.map { newItem -> ItemID in
-            let newId = ItemID()
+            let newId = newItem.id
             itemsForIds[newId] = newItem
             idsForItems[newItem] = newId
             nodesForIds[newId] = .init(parent: parentId, children: [])
